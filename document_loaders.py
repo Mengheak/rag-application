@@ -5,3 +5,15 @@ from langchain_community.document_loaders import TextLoader
 from dotenv import load_dotenv
 
 load_dotenv()
+
+def load_text_file():
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as temp_file:
+        temp_file.write(b"Hello, this is a sample text file.\n This file is used to")
+        temp_file_path = temp_file.name
+    try:
+        loader = TextLoader(temp_file_path)
+        document = loader.load()
+        for doc in document:
+            print(doc.page_content)
+    finally:
+        pass
