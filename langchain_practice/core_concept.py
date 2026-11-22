@@ -1,6 +1,7 @@
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from langchain.chat_models import init_chat_model
 
 def demo_basic_chain():
     """Demonstrate a basic chain using LCEL and Runnable."""
@@ -91,7 +92,9 @@ def exercise_first_chain():
     result = chain.invoke({"product": "AI Course", "audience": "developers"})
     print(f"Response: {result}")
 
-
+def new_way():
+    model = init_chat_model("qwen2.5:3b", temperature=0.7)
+    prompt = ChatPromptTemplate.from_template()
 
 if __name__ == "__main__":
     # demo_basic_chain()
