@@ -71,8 +71,31 @@ def demo_schema_inspection():
     print(f"Input schema: {input_schema}")
     print(f"Output schema: {output_schema}")
 
+def exercise_first_chain():
+    """
+    EXERCISE: Create a chain that:
+    1. Take a product name and target audience
+    2. Generates a marketing tagline
+    3. Return just the tagline as a string
+
+    Test with: product="AI Course", audience="developers"
+    """
+
+    prompt = ChatPromptTemplate.from_template(
+        "Generate a marketing tagline for product: {product} and the target audience: {audience}"
+    )
+    model = ChatOllama(model="qwen2.5:3b")
+    parser = StrOutputParser()
+    chain = prompt | model | parser
+
+    result = chain.invoke({"product": "AI Course", "audience": "developers"})
+    print(f"Response: {result}")
+
+
+
 if __name__ == "__main__":
     # demo_basic_chain()
     # demo_batch_execution()
     # demo_streaming()
-    demo_schema_inspection()
+    # demo_schema_inspection(
+    exercise_first_chain()
