@@ -1,3 +1,4 @@
+from langchain_classic.output_parsers import StructuredOutputParser
 from langchain_core.prompts import (
     ChatPromptTemplate,
     FewShotChatMessagePromptTemplate,
@@ -58,7 +59,20 @@ def demo_pydantic_output_parser():
     chain = prompt | llm | parser
     result = chain.invoke({"description": "A 20 years old developer named Heak"})
     print(result)
+
+
+# Structured output
+def demo_structured_output_parser():
+    from pydantic import BaseModel, Field
+    class MovieReview(BaseModel):
+        title: str = Field(..., description="The title of the movie")
+        review: str = Field(..., description="The review of the movie")
+        rating: int = Field(..., description="The rating of the movie")
+    structured_model = llm.with_structured_output(MovieReview)
+    result = structured_model.invoke("Review: Inception is a mind-bending thriller. 9/10")
+    print(result)
 if __name__ == "__main__":
     # demo_str_output_parser()
     # demo_json_output_parser()
+    # demo_pydantic_output_parser()
     demo_pydantic_output_parser()
