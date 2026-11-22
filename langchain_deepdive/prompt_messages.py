@@ -75,7 +75,7 @@ few_shot_prompt = FewShotChatMessagePromptTemplate(
     example_prompt=example_prompt,
     examples=examples,
 )
-final_prompt =ChatPromptTemplate.from_messages([
+final_prompt = ChatPromptTemplate.from_messages([
     ("system", "Give the opposite of each word"),
     few_shot_prompt,
     ("human", "{input}")]
@@ -86,3 +86,20 @@ few_shot_response = model.invoke(
 
 
 print(f"Response by few shot prompt: \n{few_shot_response.content}")
+
+
+# Reusable prompt
+
+system_prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a {role}")
+])
+user_prompt = ChatPromptTemplate.from_messages([
+    ("human", "{question}"),
+])
+
+full_prompt = system_prompt + user_prompt
+
+fin = full_prompt.format_messages(
+    role="helpful assistant",
+    question="What is the capital of France?",
+)
