@@ -122,9 +122,49 @@ def demo_few_shot():
     response = chain.invoke({"word": "bright"})
     print(f"Few-shot result: {response.content}")
 
+def demo_prompt_composition():
+    """Compose prompts from reusable parts."""
+
+    # Reusable system prompt
+    persona = ChatPromptTemplate.from_messages(
+        [("system", "You are a {role}. Your tone is {tone}.")]
+    )
+
+    # Reusable task prompt
+    task = ChatPromptTemplate.from_messages([("human", "{task}")])
+
+    # Combine
+    full_prompt = persona + task
+
+    # Test different combinations
+    model = ChatOllama(model="qwen2.5:3b", temperature=0.7)
+    chain = full_prompt | model
+
+    # As a pirate
+    response = chain.invoke(
+        {
+            "role": "pirate captain",
+            "tone": "adventurous",
+            "task": "Tell me about your ship",
+        }
+    )
+    print(f"Pirate: {response.content[:100]}...")
+
+    # As a scientist
+    response = chain.invoke(
+        {
+            "role": "scientist",
+            "tone": "precise and academic",
+            "task": "Explain photosynthesis",
+        }
+    )
+    print(f"\nScientist: {response.content[:100]}...")
+
 
 if __name__ == "__main__":
     # demo_basic_template()
     # demo_message_types()
     # demo_messages_placeholder()
-    demo_few_shot()
+    # demo_few_shot()
+    demo_prompt_composition()
+
