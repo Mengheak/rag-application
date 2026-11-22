@@ -19,6 +19,26 @@ def demo_basic_chain():
     print(f"Response: {result}")
     return result
 
-if __name__ == "__main__":
-    demo_basic_chain()
+def demo_batch_execution():
+    """Demonstrate batch execution for multiple inputs"""
+    prompt = ChatPromptTemplate.from_template(
+        "Translate to Khmer: {text}"
+    )
+    model = ChatOllama(model="qwen2.5:3b", temperature=0.7)
+    parser = StrOutputParser()
 
+    chain = prompt | model | parser
+    inputs = [
+        {"text": "What is LangChain?"},
+        {"text": "Hello, how are you?"},
+        {"text": "What is your name"},
+    ]
+
+    results = chain.batch(inputs)
+
+    for text in zip(inputs, results):
+        print(f"Input: {text[0]['text']} => Output: {text[1]}")
+
+if __name__ == "__main__":
+    # demo_basic_chain()
+    demo_batch_execution()
