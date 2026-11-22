@@ -82,7 +82,49 @@ def demo_messages_placeholder():
     response = chain.invoke({"history": history, "question": "What's my name?"})
     print(f"\nResponse: {response.content}")
 
+def demo_few_shot():
+    """Few-shot prompting with examples."""
+
+    # Define examples
+    examples = [
+        {"word": "happy", "opposite": "sad"},
+        {"word": "fast", "opposite": "slow"},
+        {"word": "big", "opposite": "small"},
+    ]
+
+    # Template for each example
+    example_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("human", "What's the opposite of '{word}'?"),
+            ("ai", "The opposite of '{word}' is '{opposite}'."),
+        ]
+    )
+
+    # Few-shot wrapper
+    few_shot = FewShotChatMessagePromptTemplate(
+        example_prompt=example_prompt,
+        examples=examples,
+    )
+
+    # Final prompt
+    final_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", "You give the opposite of words. Follow the examples."),
+            few_shot,
+            ("human", "What's the opposite of '{word}'?"),
+        ]
+    )
+
+    # Test
+    model = ChatOllama(model="qwen2.5:3b", temperature=0)
+    chain = final_prompt | model
+
+    response = chain.invoke({"word": "bright"})
+    print(f"Few-shot result: {response.content}")
+
+
 if __name__ == "__main__":
     # demo_basic_template()
     # demo_message_types()
-    demo_messages_placeholder()
+    # demo_messages_placeholder()
+    demo_few_shot()
