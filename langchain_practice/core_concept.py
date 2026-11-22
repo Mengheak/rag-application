@@ -54,9 +54,25 @@ def demo_streaming():
     for chunk in chain.stream({"topic": "nature"}):
         print(chunk, end="", flush=True)
 
+def demo_schema_inspection():
+    prompt = ChatPromptTemplate.from_template(
+        "Write a haiku about: {topic}"
+    )
+    model = ChatOllama(model="qwen2.5:3b", temperature=0.7)
+    parser = StrOutputParser()
 
+    chain = prompt | model | parser
+
+    #inspect input and output schemas
+
+    input_schema = chain.input_schema.model_json_schema()
+    output_schema = chain.output_schema.model_json_schema()
+
+    print(f"Input schema: {input_schema}")
+    print(f"Output schema: {output_schema}")
 
 if __name__ == "__main__":
     # demo_basic_chain()
     # demo_batch_execution()
-    demo_streaming()
+    # demo_streaming()
+    demo_schema_inspection()
