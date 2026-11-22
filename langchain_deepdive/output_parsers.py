@@ -11,7 +11,7 @@ from langchain_core.messages import (
 from langchain_ollama import ChatOllama
 from langchain_core.output_parsers import (
     StrOutputParser,
-    JsonOutputParser
+    JsonOutputParser, PydanticOutputParser, format_instructions
 )
 from langchain.chat_models import init_chat_model
 
@@ -43,7 +43,22 @@ def demo_json_output_parser():
     response = chain.invoke({"description": "A 20 years old developer named Heak"})
     print(response)
 
+# Pydantic output parser
+def demo_pydantic_output_parser():
+    from pydantic import BaseModel, Field
 
+    class Person(BaseModel):
+        name: str = Field(..., description="The person's name")
+        age: int = Field(..., description="The person's age")
+        occupation: str = Field(..., description="The person's occupation")
+    parser = PydanticOutputParser(pydantic_object=Person)
+    prompt = ChatPromptTemplate.from_template(
+        "Return a JSON object with 'name', 'age' and 'occupation' for: {description}"
+    ).partial(format_instructions=parser.get_format_instructions())
+    chain = prompt | llm | parser
+    result = chain.invoke({"description": "A 20 years old developer named Heak"})
+    print(result)
 if __name__ == "__main__":
     # demo_str_output_parser()
-    demo_json_output_parser()
+    # demo_json_output_parser()
+    demo_pydantic_output_parser()
