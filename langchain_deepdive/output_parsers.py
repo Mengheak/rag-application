@@ -62,7 +62,7 @@ def demo_pydantic_output_parser():
 
 
 # Structured output
-def demo_structured_output_parser():
+def demo_structured_output():
     from pydantic import BaseModel, Field
     class MovieReview(BaseModel):
         title: str = Field(..., description="The title of the movie")
@@ -75,4 +75,4 @@ if __name__ == "__main__":
     # demo_str_output_parser()
     # demo_json_output_parser()
     # demo_pydantic_output_parser()
-    demo_pydantic_output_parser()
+    demo_structured_output()
