@@ -59,8 +59,31 @@ def demo_model_comparison():
         response = model.invoke(prompt)
         print(f"Response from {models_name} : {response.content}")
 
+def demo_message():
+    model = ChatOllama(
+        model="qwen2.5:3b",
+        temperature=0
+    )
 
+    # using message objects (more control over roles)
+    messages = [
+        SystemMessage(content="You are a helpful assistant"),
+        HumanMessage(content="What is the capital of Cambodia? answer in one word"),
+    ]
+
+    print("Using message objects")
+    print(f"Messages : {messages[0]} | {messages[1]}")
+
+    response = model.invoke(messages)
+    print(f"Response using message objects: {response.content}")
+
+    # Multi-turn conversation using message objects
+    messages.append(response)
+    print("Continuing conversation")
+    print(messages)
+    messages.append(HumanMessage(content="What is the capital of French?"))
 
 if __name__ == "__main__":
     # demo_init_chat_model()
-    demo_model_comparison()
+    # demo_model_comparison()
+    demo_message()
