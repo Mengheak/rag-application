@@ -98,6 +98,24 @@ def demo_qa_bot():
         print(f"Follow-up Questions: {response.follow_up_questions}")
         print(f"Sources Needed: {response.sources_needed}")
         print("-" * 60)
+
+def demo_qa_bot_with_parameter(question: str):
+    bot = SmartQABot()
+
+    print("=" * 60)
+    print("SMART Q&A BOT DEMO")
+    print("=" * 60)
+
+    response = bot.ask(question)
+
+    print(f"Question: {question}")
+    print(f"Answer: {response.answer}")
+    print(f"Confidence: {response.confidence}")
+    print(f"Reasoning: {response.reasoning}")
+    print(f"Follow-up Questions: {response.follow_up_questions}")
+    print(f"Sources Needed: {response.sources_needed}")
+    print("-" * 60)
+
 def demo_error_handling():
     """Demonstrate error handling."""
 
@@ -139,9 +157,14 @@ def demo_batch_processing():
 if __name__ == "__main__":
 
     try:
-        demo_qa_bot()
+        # demo_qa_bot()
         # demo_batch_processing()
         # demo_error_handling()
+
+        while True:
+            question = input("Question: ")
+            demo_qa_bot_with_parameter(question)
+
         print("\n" + "=" * 60)
     finally:
         get_cached_client().flush()
