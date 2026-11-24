@@ -8,6 +8,8 @@ from langchain_text_splitters import (
 )
 from langchain_core.documents import Document
 
+from vector_stores import SAMPLE_DOCS
+
 #Sample document for testing
 SAMPLE_TEXT = """# Introduction to Machine Learning
 
@@ -139,8 +141,20 @@ def markdown_splitter():
         print(f"Metadata : {chunk.metadata}...\n")
         print(f"Content : {chunk.page_content}...\n")
 
+def code_splitter():
+    python_splitter = RecursiveCharacterTextSplitter.from_language(
+        language=Language.PYTHON, chunk_size=500, chunk_overlap=50
+    )
+    chunks = python_splitter.split_text(SAMPLE_CODE)
+    print(f"Code Splitter produced {len(chunks)} chunks.")
+    for i, chunk in enumerate(chunks):
+        print(f"\nChunk {i} ({len(chunk)} chars):")
+        print(chunk[:150] + "..." if len(chunk) > 150 else chunk)
+
+
 if __name__ == '__main__':
     # recursive_splitter()
     # chunk_size_comparison()
     # overlap_importance()
-    markdown_splitter()
+    # markdown_splitter()
+    code_splitter()
