@@ -71,7 +71,6 @@ def create_kb():  # knowledge base
     )
     return vector_store
 
-
 def demo_basic_rag():
     vector_store = create_kb()
     retriever = vector_store.as_retriever(
@@ -128,7 +127,6 @@ def demo_basic_rag():
         print(f"Q: {q}\n")
         print(f"Answer: {answer}\n")
 
-
 def demo_rag_with_sources():
     vector_store = create_kb()
     retriever = vector_store.as_retriever(search_kwargs={"k": 3})
@@ -167,6 +165,49 @@ Answer (include sources):"""
     print(f"Q: What are the core components?\n")
     print(f"A: {answer}")
 
+def demo_rag_with_fallback():
+    vector_store = create_kb()
+    retriever = vector_store.as_retriever(search_kwargs={"k": 3})
+    llm = init_chat_model(
+        model="qwen2.5:3b",
+        model_provider="ollama",
+        temperature=0
+    )
+    prompt = ChatPromptTemplate.from_template(
+        """
+Answer the question based ONLY on the following context.
+If the answer is not in the context, respond with: "I don't have information about that in my knowledge base."
+
+Context:
+{context}
+
+Question: {question}
+
+Answer:"""
+    )
+
+    def format_docs(docs):
+        return "\n\n".join(doc.page_content for doc in docs)
+
+    rag_chain = (
+        {"context": retriever | format_docs, "question": RunnablePassthrough()}
+        | prompt
+        | llm
+        | StrOutputParser()
+    )
+    print("RAG with Fallback:\n")
+
+    questions = [
+        "What is the pricing for LangSmith?",  # In knowledge base
+        "What is the stock price of OpenAI?",  # Not in knowledge base
+        "How do I deploy LangChain to AWS?",  # Not in knowledge base
+    ]
+
+    for q in questions:
+        answer = rag_chain.invoke(q)
+        print(f"Q: {q}")
+        print(f"A: {answer}\n")
 if __name__ == "__main__":
     # demo_basic_rag()
-    demo_rag_with_sources()
+    # demo_rag_with_sources()
+    demo_rag_with_fallback()
