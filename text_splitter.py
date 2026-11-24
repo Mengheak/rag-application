@@ -1,3 +1,4 @@
+from langchain_classic import text_splitter
 from langchain_text_splitters import (
     RecursiveCharacterTextSplitter,
     CharacterTextSplitter,
@@ -122,6 +123,24 @@ def overlap_importance():
     print(f"  Chunk 1 end: ...{chunks_with_overlap[0][-20:]}")
     print(f"  Chunk 2 start: {chunks_with_overlap[1][:20]}...")
 
+def markdown_splitter():
+    headers_to_consider = [
+        ("#", "h1"),
+        ("##", "h2"),
+        ("###", "h3")
+    ]
+    splitter = MarkdownHeaderTextSplitter(
+        headers_to_split_on=headers_to_consider,
+    )
+    chunks = splitter.split_text(SAMPLE_TEXT)
+
+    for i, chunk in enumerate(chunks):
+        print(f"Chunk {i + 1}: {str(chunk)[:200]}...\n")
+        print(f"Metadata : {chunk.metadata}...\n")
+        print(f"Content : {chunk.page_content}...\n")
+
 if __name__ == '__main__':
     # recursive_splitter()
-    overlap_importance()
+    # chunk_size_comparison()
+    # overlap_importance()
+    markdown_splitter()
