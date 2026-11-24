@@ -1,4 +1,3 @@
-
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough, RunnableParallel
 from langchain_core.output_parsers import StrOutputParser
@@ -12,7 +11,6 @@ from pydantic import BaseModel, Field
 from typing import List
 from dotenv import load_dotenv
 import tempfile
-
 
 embeddings_model = OllamaEmbeddings(model="nomic-embed-text")
 
@@ -51,8 +49,7 @@ Create your first chain in under 10 lines of code.
 """
 
 
-
-def create_kb(): #knowledge base
+def create_kb():  # knowledge base
 
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=500,
@@ -73,6 +70,7 @@ def create_kb(): #knowledge base
         persist_directory=tempfile.mkdtemp(),
     )
     return vector_store
+
 
 def demo_basic_rag():
     vector_store = create_kb()
@@ -103,16 +101,17 @@ def demo_basic_rag():
         if you don't know the answer just say 'I don't know'
         """
     )
-    #format retrieved docs
+
+    # format retrieved docs
     def format_docs(docs):
         return "\n\n".join([doc.page_content for doc in docs])
 
-    #RAG chain
+    # RAG chain
     rag_chain = (
-        {"context": retriever | format_docs, "question": RunnablePassthrough()}
-        | prompt
-        | llm
-        | StrOutputParser()
+            {"context": retriever | format_docs, "question": RunnablePassthrough()}
+            | prompt
+            | llm
+            | StrOutputParser()
     )
 
     # test the RAG chain
@@ -129,5 +128,45 @@ def demo_basic_rag():
         print(f"Q: {q}\n")
         print(f"Answer: {answer}\n")
 
+
+def demo_rag_with_sources():
+    vector_store = create_kb()
+    retriever = vector_store.as_retriever(search_kwargs={"k": 3})
+
+    llm = init_chat_model(model="qwen2.5:3b", model_provider="ollama", temperature=0)
+
+    prompt = ChatPromptTemplate.from_template(
+        """
+Answer the question based on the context below. Include which sources you used.
+
+Context:
+{context}
+
+Question: {question}
+
+Answer (include sources):"""
+    )
+
+    def format_docs_with_sources(docs):
+        formatted = []
+
+        for i, doc in enumerate(docs):
+            source = doc.metadata.get("source", 'unknown')
+            formatted.append(f"[{i + 1}] {source}:\n{doc.page_content}")
+        return "\n\n".join(formatted)
+
+    rag_chain = (
+            {
+                "context": retriever | format_docs_with_sources,
+                "question": RunnablePassthrough(),
+            }
+            | prompt | llm | StrOutputParser()
+    )
+    print("RAG with Sources:\n")
+    answer = rag_chain.invoke("What are the core components of LangChain?")
+    print(f"Q: What are the core components?\n")
+    print(f"A: {answer}")
+
 if __name__ == "__main__":
-    demo_basic_rag()
+    # demo_basic_rag()
+    demo_rag_with_sources()
