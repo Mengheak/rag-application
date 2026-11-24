@@ -151,10 +151,30 @@ def code_splitter():
         print(f"\nChunk {i} ({len(chunk)} chars):")
         print(chunk[:150] + "..." if len(chunk) > 150 else chunk)
 
+def document_splitter():
+    from langchain_community.document_loaders import PyPDFLoader
+    from langchain_core.documents import Document
+
+    loader = PyPDFLoader("./docs/langchain_demo.pdf")
+    docs = loader.load()
+
+    print(f"Loaded {len(docs)} documents.")
+
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=500,
+        chunk_overlap=50,
+    )
+    split_docs = splitter.split_documents(docs)
+
+    print(f"Split into {len(split_docs)} chunks")
+    print(f"\nFirst chunk metadata: {split_docs[0].metadata}")
+    print(f"First chunk content: {split_docs[0].page_content[:200]}...")
+    print(f"\nLast chunk metadata: {split_docs[-1].metadata}")
 
 if __name__ == '__main__':
     # recursive_splitter()
     # chunk_size_comparison()
     # overlap_importance()
     # markdown_splitter()
-    code_splitter()
+    # code_splitter()
+    document_splitter()
