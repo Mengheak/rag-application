@@ -1,7 +1,8 @@
 from langchain.chat_models import init_chat_model
-from langchain_classic.retrievers import ContextualCompressionRetriever
+from langchain_classic.retrievers import ContextualCompressionRetriever, EnsembleRetriever
 from langchain_classic.retrievers.document_compressors import LLMChainExtractor
 from langchain_classic.retrievers.multi_query import MultiQueryRetriever
+from langchain_community.retrievers import BM25Retriever
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
@@ -10,6 +11,8 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 import logging
+
+from hybrid_search.prod_hybrid_search import bm25_retriever, ensemble_retriever
 
 logging.basicConfig()
 logging.getLogger("langchain.retrievers.multi_query").setLevel(logging.INFO)
@@ -160,7 +163,7 @@ TECH_DOCS = [
 
 def create_base_vectorstore():
     return Chroma.from_documents(
-        documents=INFO_BURIED,
+        documents=TECH_DOCS,
         embedding=OllamaEmbeddings(model="nomic-embed-text")
     )
 
@@ -197,6 +200,7 @@ def demo_multi_query_retriever():
         print(
             f"\n{i + 1}. [{doc.metadata.get('topic', 'N/A')}] {doc.page_content[:100]}..."
         )
+
 def demo_contextual_compression():
     """Contextual Compression extracts only relevant parts."""
 
@@ -241,6 +245,56 @@ def demo_contextual_compression():
         print(f"Length: {len(doc.page_content)} chars")
         print(f"Content: {doc.page_content}\n")
 
+def demo_ensemble_hybrid_search():
+    print("=" * 60)
+    print("ENSEMBLE/HYBRID RETRIEVER")
+    print("Combines keywords (BM25) + semantic search")
+    print("=" * 60)
+
+    vectorstore = create_base_vectorstore()
+
+    # BM25 retriever
+    bm25_retriever = BM25Retriever.from_documents(TECH_DOCS)
+    bm25_retriever.k = 3
+
+    # Semantic retriever
+    semantic_retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+
+    # Ensemble combines both retrievers
+    ensemble_retriever = EnsembleRetriever(
+        retrievers=[bm25_retriever, semantic_retriever],
+        weights=[0.4, 0.6],
+    )
+
+    # queries = [
+    #     "PostgreSQL pgvector",
+    #     "What database stores embeddings?"
+    # ]
+    queries = [
+        "ACID transactions",  # Keyword-heavy (BM25 helps)
+        "How do I store AI model outputs for later retrieval?",  # Semantic (vectors help)
+        "fast similarity lookup for embeddings",  # Mixed
+    ]
+
+    for query in queries:
+        print(f"\nQuery: {query}")
+        print("-" * 60)
+
+        bm25_results = bm25_retriever.invoke(query)
+        semantic_results = semantic_retriever.invoke(query)
+        ensemble_results = ensemble_retriever.invoke(query)
+
+        print("---BM25---")
+        for bm25_result in bm25_results:
+            print(f"BM25 result: {bm25_result.page_content[:100]}...")
+        print("---Semantic search---")
+        for semantic_result in semantic_results:
+            print(f"Semantic result: {semantic_result.page_content[:100]}...")
+        print("---Ensemble both---")
+        for ensemble_result in ensemble_results:
+            print(f"Ensemble result: {ensemble_result.page_content[:100]}...")
+
 if __name__ == "__main__":
     # demo_multi_query_retriever()
-    demo_contextual_compression()
+    # demo_contextual_compression()
+    demo_ensemble_hybrid_search()
