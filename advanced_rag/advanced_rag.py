@@ -98,7 +98,6 @@ with cross-region replication. RTO is 4 hours, and RPO is 1 hour.""",
     ),
 ]
 
-
 TECH_DOCS = [
     Document(
         page_content="Python is a high-level programming language known for its simplicity and readability. It supports multiple programming paradigms including procedural, object-oriented, and functional programming. Python is widely used in web development, data science, artificial intelligence, and automation.",
@@ -162,12 +161,14 @@ TECH_DOCS = [
     ),
 ]
 
+
 def create_base_vectorstore():
     return Chroma.from_documents(
         documents=TECH_DOCS,
         embedding=OllamaEmbeddings(model="nomic-embed-text"
                                    )
     )
+
 
 def demo_multi_query_retriever():
     print("=" * 60)
@@ -184,7 +185,7 @@ def demo_multi_query_retriever():
     )
 
     retriever = MultiQueryRetriever.from_llm(
-        retriever=vectorstore.as_retriever(search_kwargs={"k":2}),
+        retriever=vectorstore.as_retriever(search_kwargs={"k": 2}),
         llm=llm
     )
 
@@ -202,6 +203,7 @@ def demo_multi_query_retriever():
         print(
             f"\n{i + 1}. [{doc.metadata.get('topic', 'N/A')}] {doc.page_content[:100]}..."
         )
+
 
 def demo_contextual_compression():
     """Contextual Compression extracts only relevant parts."""
@@ -226,7 +228,7 @@ def demo_contextual_compression():
     # Wrap retriever with compression
     compression_retriever = ContextualCompressionRetriever(
         base_compressor=compressor,
-        base_retriever=vectorstore.as_retriever(search_kwargs={"k":4}),
+        base_retriever=vectorstore.as_retriever(search_kwargs={"k": 4}),
     )
 
     query = "What frameworks exist for building LLM applications?"
@@ -246,6 +248,7 @@ def demo_contextual_compression():
     for doc in compressed_docs:
         print(f"Length: {len(doc.page_content)} chars")
         print(f"Content: {doc.page_content}\n")
+
 
 def demo_ensemble_hybrid_search():
     print("=" * 60)
@@ -295,6 +298,7 @@ def demo_ensemble_hybrid_search():
         print("---Ensemble both---")
         for ensemble_result in ensemble_results:
             print(f"Ensemble result: {ensemble_result.page_content[:100]}...")
+
 
 def demo_parent_document_retriever():
     """Parent Document Retriever: small chunks for search, large for context."""
@@ -384,8 +388,73 @@ def demo_parent_document_retriever():
     print(f"Content preview: {parent_docs[0].page_content[:300]}...")
 
 
+def demo_advanced_rag_chain():
+    """Complete RAG chain with advanced retrieval."""
+
+    print("=" * 60)
+    print("COMPLETE ADVANCED RAG CHAIN")
+    print("Multi-query + Compression + RAG")
+    print("=" * 60)
+
+    vectorstore = create_base_vectorstore()
+
+    llm = init_chat_model(
+        model="qwen2.5:3b",
+        model_provider="ollama",
+        temperature=0
+    )
+
+    # Multi retrievers for better recall
+
+    multi_retriever = MultiQueryRetriever.from_llm(
+        retriever=vectorstore.as_retriever(search_kwargs={"k": 3}),
+        llm=llm,
+    )
+
+    # Compression to focus on relevant info
+    compressor = LLMChainExtractor.from_llm(llm)
+    advanced_retriever = ContextualCompressionRetriever(
+        base_compressor=compressor,
+        base_retriever=multi_retriever,
+    )
+
+    # RAG prompt
+    prompt = ChatPromptTemplate.from_template(
+        """
+Answer the question based on the following context. Be specific and cite which technologies you're referring to.
+
+Context:
+{context}
+
+Question: {question}
+
+Answer:"""
+    )
+
+    def format_docs(docs):
+        return "\n\n".join(doc.page_content for doc in docs)
+
+    # Build chain
+    rag_chain = (
+        {"context": advanced_retriever | format_docs, "question": RunnablePassthrough()}
+        | prompt
+        | llm
+        | StrOutputParser()
+    )
+    # Test
+    questions = [
+        "What options do I have for building AI agents?",
+        "How can I store and search embeddings?",
+    ]
+
+    for q in questions:
+        print(f"\nQ: {q}")
+        answer = rag_chain.invoke(q)
+        print(f"A: {answer}")
+
 if __name__ == "__main__":
     # demo_multi_query_retriever()
     # demo_contextual_compression()
     # demo_ensemble_hybrid_search()
-    demo_parent_document_retriever()
+    # demo_parent_document_retriever()
+    demo_advanced_rag_chain()
